@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animated Weather Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #a2d2ff, #61a5ff);
+      color: #000000;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 40px auto;
+      background: rgba(255, 255, 255, 0.75);
+      border-radius: 25px;
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .top-section {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .left-panel {
+      flex: 1;
+      min-width: 300px;
+      background: linear-gradient(160deg, #4facfe, #00f2fe);
+      color: white;
+      padding: 40px 30px;
+      text-align: center;
+      position: relative;
+    }
+
+    .left-panel::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      opacity: 0.08;
+      pointer-events: none;
+    }
+
+    .right-panel {
+      flex: 2;
+      min-width: 300px;
+      padding: 40px 30px;
+    }
+
+    .search-box {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    input,
+    button {
+      padding: 12px 16px;
+      margin: 5px;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+    }
+
+    input {
+      width: 60%;
+      max-width: 300px;
+    }
+
+    button {
+      background: #0077b6;
+      color: white;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #023e8a;
+      transform: scale(1.05);
+    }
+
+    .weather-details,
+    .forecast-hour,
+    .forecast-weekly {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .card,
+    .forecast-hour div,
+    .forecast-weekly div {
+      background: rgba(173, 216, 230, 0.8);
+      padding: 16px;
+      border-radius: 20px;
+      text-align: center;
+      min-width: 120px;
+    }
+
+    .forecast-weekly div {
+      min-width: 100px;
+    }
+
+    img.icon {
+      width: 80px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .top-section {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-section">
+      <div class="left-panel">
+        <h2 id="location">City, Country</h2>
+        <h1 id="temperature">--°</h1>
+        <p id="condition">Loading...</p>
+        <img id="weatherIcon" class="icon" src="" alt="icon" />
+        <p>🌅 <b>Sunrise:</b> <span id="sunrise">--:--</span></p>
+        <p>🌇 <b>Sunset:</b> <span id="sunset">--:--</span></p>
+      </div>
+      <div class="right-panel">
+        <div class="search-box">
+          <input type="text" id="cityInput" placeholder="Enter city..." />
+          <button onclick="searchWeather()">Search</button>
+        </div>
+        <div class="weather-details">
+          <div class="card">💧 Humidity<br /><strong id="humidity">--%</strong></div>
+          <div class="card">💨 Wind<br /><strong id="wind">-- km/h</strong></div>
+          <div class="card">🌡 Feels Like<br /><strong id="feelsLike">--°</strong></div>
+          <div class="card">⚖ Pressure<br /><strong id="pressure">-- hPa</strong></div>
+          <div class="card">👁 Visibility<br /><strong id="visibility">-- m</strong></div>
+          <div class="card">🌧 Rain<br /><strong id="rain">-- mm</strong></div>
+        </div>
+        <h3>🌤 Hourly Forecast</h3>
+        <div class="forecast-hour" id="hourlyForecast"></div>
+        <h3>📅 Weekly Forecast</h3>
+        <div class="forecast-weekly" id="weeklyForecast"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_KEY = '764deb87fa9b1517db738d2c15b3dd47';
+
+    function kelvinToC(k) {
+      return Math.round(k - 273.15);
+    }
+
+    function unixToTime(u) {
+      return new Date(u * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    async function fetchWeather(city) {
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}`);
+      const data = await res.json();
+
+      document.getElementById('location').textContent = `${data.name}, ${data.sys.country}`;
+      document.getElementById('temperature').textContent = `${kelvinToC(data.main.temp)}°`;
+      document.getElementById('condition').textContent = data.weather[0].main;
+      document.getElementById('humidity').textContent = `${data.main.humidity}%`;
+      document.getElementById('wind').textContent = `${data.wind.speed} km/h`;
+      document.getElementById('feelsLike').textContent = `${kelvinToC(data.main.feels_like)}°`;
+      document.getElementById('pressure').textContent = `${data.main.pressure} hPa`;
+      document.getElementById('visibility').textContent = `${data.visibility} m`;
+      document.getElementById('rain').textContent = data.rain ? `${data.rain['1h'] || 0} mm` : '0 mm';
+      document.getElementById('sunrise').textContent = unixToTime(data.sys.sunrise);
+      document.getElementById('sunset').textContent = unixToTime(data.sys.sunset);
+      document.getElementById('weatherIcon').src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+    }
+
+    async function fetchForecast(city) {
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${API_KEY}`);
+      const data = await res.json();
+
+      const hourly = document.getElementById('hourlyForecast');
+      const weekly = document.getElementById('weeklyForecast');
+      hourly.innerHTML = '';
+      weekly.innerHTML = '';
+
+      for (let i = 0; i < 5; i++) {
+        const hour = data.list[i];
+        const temp = kelvinToC(hour.main.temp);
+        const time = new Date(hour.dt_txt).getHours();
+        hourly.innerHTML += `<div><strong>${time}:00</strong><br>${temp}°</div>`;
+      }
+
+      const days = {};
+      data.list.forEach(f => {
+        const date = f.dt_txt.split(' ')[0];
+        if (!days[date]) days[date] = [];
+        days[date].push(f);
+      });
+
+      const entries = Object.entries(days).slice(0, 7);
+      entries.forEach(([date, forecasts]) => {
+        const temps = forecasts.map(f => f.main.temp);
+        const avg = kelvinToC(temps.reduce((a, b) => a + b, 0) / temps.length);
+        weekly.innerHTML += `<div><strong>${date}</strong><br>${avg}°C</div>`;
+      });
+    }
+
+    async function searchWeather() {
+      const city = document.getElementById('cityInput').value;
+      if (city) {
+        await fetchWeather(city);
+        await fetchForecast(city);
+      }
+    }
+
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const { latitude, longitude } = pos.coords;
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}`);
+      const data = await res.json();
+      fetchWeather(data.name);
+      fetchForecast(data.name);
+    });
+  </script>
+</body>
+</html>
